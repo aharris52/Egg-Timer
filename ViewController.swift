@@ -7,40 +7,66 @@
 //
 
 import UIKit
+import AVFoundation
 
 class ViewController: UIViewController {
     
+    @IBOutlet weak var progressBar: UIProgressView!
     @IBOutlet weak var titleLabel: UILabel!
-    let eggTimes = ["Soft": 3,
-                    "Medium": 4,
-                    "Hard": 7]
     
-    var secondsRemaining = 60
-    
+    // structure to hold respective egg times
+    let eggTimes = ["Soft": 300,
+                    "Medium": 420,
+                    "Hard": 720]
+    // total time timer will run
+    var timeSelected = 0
+    var elapsedTime = 0
+    // Timer() instance to run countdown
     var timer = Timer()
     
+    // sound effect
+    var alarmSoundEffect: AVAudioPlayer?
+    
     @IBAction func hardnessSelected(_ sender: UIButton) {
-        // we destroy the previous instance to prevent
-        // a new timer being made every time we press
-        // a button
-        timer.invalidate()
-        
+        // grab the time from the dictionary
         let hardness = sender.currentTitle! // Soft, Medium, Hard
-        
-        secondsRemaining = eggTimes[hardness]!
-        
+        // set runtime
+        timeSelected = eggTimes[hardness]!
+        titleLabel.text = hardness
+        resetTimer()
         timer = Timer.scheduledTimer(timeInterval: 0.4, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
     }
     
     @objc func updateTimer() {
-    
-        //print("It works!")
-        if secondsRemaining != 0 {
-            print("\(secondsRemaining) seconds.")
-            secondsRemaining -= 1
+        if elapsedTime <= timeSelected {
+            let percentageProgress = Float(elapsedTime) / Float(timeSelected)
+            progressBar.progress = Float(percentageProgress)
+            //print("percentageProgress: \(percentageProgress)")
+            //print("totalTime: \(totalTime)")
+            //print("elapsedTime: \(elapsedTime)")
+            elapsedTime += 1
         } else {
             timer.invalidate()
             titleLabel.text = "DONE!"
+            playSound()
+        }
+    }
+    
+    func resetTimer(){
+        timer.invalidate()
+        progressBar.progress = 0.0
+        elapsedTime = 0
+    }
+    
+    func playSound() {
+        let path = Bundle.main.path(forResource: "alarm_sound.mp3", ofType:nil)!
+        let url = URL(fileURLWithPath: path)
+        do {
+            alarmSoundEffect = try AVAudioPlayer(contentsOf: url)
+            alarmSoundEffect?.play()
+        } catch {
+            // couldn't load file :(
+            print("Error, couldn't load resource.")
         }
     }
 }
